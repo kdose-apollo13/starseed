@@ -107,26 +107,26 @@ def cpu_stats(record=None):
                 print(f'{cpu_inst:>18,.0f}      cpu instructions')
                 print(f'{cache_ref:>18,.0f}      cache references')
                 print(f'{cache_miss:>18,.0f}      cache misses')
-                print(f'{t_perf_ms-160:>18.1f}      time by perf (ms)')
+                print(f'{t_perf_ms - 150:>18.1f}      time by perf (ms)')  # 150 ms offset
                 print(f'{t_python_ms:>18,.1f}      time by python (ms)')
                 print(f'{peak_RAM:>18,}      peak memory (MiB)')
             else:
-                record['t_perf_ms'] += t_perf_ms
-                record['t_python_ms'] += t_python_ms
-                record['cpu_inst'] += cpu_inst
-                record['cache_ref'] += cache_ref
-                record['cache_miss'] += cache_miss
-                record['peak_mem_MiB'] += peak_RAM
+                record['t_perf_ms'] = round(t_perf_ms - 150, 3)  # 150 ms offset
+                record['t_python_ms'] = round(t_python_ms, 3)
+                record['cpu_inst'] = cpu_inst
+                record['cache_ref'] = cache_ref
+                record['cache_miss'] = cache_miss
+                record['peak_mem_MiB'] = peak_RAM
 
 
 def new_template():
     return {
-        't_perf_ms': -160,  # offset due to 0.2 s delay perf startup
-        't_python_ms': 0,
-        'cpu_inst': 0,
-        'cache_ref': 0,
-        'cache_miss': 0,
-        'peak_mem_MiB': 0,
+        't_perf_ms': None,
+        't_python_ms': None,
+        'cpu_inst': None,
+        'cache_ref': None,
+        'cache_miss': None,
+        'peak_mem_MiB': None,
     }
 
 
