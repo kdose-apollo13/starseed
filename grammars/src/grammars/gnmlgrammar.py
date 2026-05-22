@@ -1,5 +1,9 @@
 """
-    Grafnav Markup Language
+    +-----+
+    !kDoSE¡
+    +-----+
+
+    graph nav markup lang
 """
 from parsimonious.grammar import Grammar
 from parsimonious.nodes import Node
@@ -9,58 +13,58 @@ from grammars.igrammar import IGrammar
 
 GNML_GRAMMAR = r'''
     gnml                = ws (node_def ws)*
-    node_def            = node_start sp id_line sp content_lines sp node_end
+
+    node_def            = node_start ws id ws contents ws node_end
     node_start          = "### NODE" sp newline
-    id_line             = "---" sp "id" sp ":" sp complex_identifier sp newline
+    id                  = "---" sp "id" sp ":" sp dotted_str sp newline
+    contents            = (content ws)*
+    content             = meta / tags / next / prev / doc_hash / prev_hash
     node_end            = "### ENDNODE" sp newline
-    content_lines       = content_line*
-    content_line        = meta_line / tags_line / next_line / prev_line / text_line / code_line
-    meta_line           = "---" sp "meta" sp ":" sp key_value_list* sp newline
-    tags_line           = "---" sp "tags" sp ":" sp identifier_list* sp newline
-    next_line           = "---" sp "next" sp ":" sp complex_identifier_list* sp newline
-    prev_line           = "---" sp "prev" sp ":" sp complex_identifier_list* sp newline
 
-    text_line           = text_level ">" sp text_content sp newline
-    text_level          = "T" ~r"[1-3]"
-    text_content        = ~r"[^\n]*"
+    meta                = "---" sp "meta" sp ":" sp key_value_list* sp newline
+    tags                = "---" sp "tags" sp ":" sp dotted_str_list* sp newline
+    next                = "---" sp "next" sp ":" sp dotted_str_list* sp newline
+    prev                = "---" sp "prev" sp ":" sp dotted_str_list* sp newline
+    doc_hash            = "---" sp "doc_hash" sp ":" sp hex sp newline
+    prev_hash           = "---" sp "prev_hash" sp ":" sp hex sp newline
 
-    code_line           = code_level ">" sp code_content sp newline
-    code_level          = "C" ~r"[1-3]"
-    code_content        = ~r"[^\n]*"
+    key_value_list      = key_value (sp "," sp key_value)*
+    key_value           = dotted_str sp "=" sp dotted_str
+    dotted_str_list     = dotted_str (sp "," sp dotted_str)*
+    dotted_str          = str ( "." str )*
 
-    identifier_list             = identifier (sp "," sp identifier)*
-    key_value_list              = key_value (sp "," sp key_value)*
-    key_value                   = identifier sp "=" sp complex_identifier
-    complex_identifier_list     = complex_identifier (sp "," sp complex_identifier)*
-    complex_identifier          = identifier ( "." identifier )*
-
-    identifier      = ~r"[a-zA-Z0-9_]+"
-    ws              = ~r"[\r\n\t ]*"
-    sp              = ~r"[ \t]*"
-    newline         = "\n"
+    str                 = ~r"[a-zA-Z0-9_]+"
+    hex                 = ~r"[a-fA-F0-9]+"
+    ws                  = ~r"[\r\n\t ]*"
+    sp                  = ~r"[ \t]*"
+    newline             = "\n"
 '''
 
 EXAMPLE_SOURCE = '''
 ### NODE
 --- id: first.branch.22
---- meta: key1=value1, key2=value2
---- tags: tag1, tag2, tag3
-T3> a truth
-T1> fukyah
-T3> between two lies
+--- meta: key1=value1, parent.child.key2=value2
+--- tags: tag1, tag.two, three.four.five
 --- next: first.branch.22, first.branch2.1
 --- prev: first.branch.20
+--- doc_hash: a1b2c3d4e5f6
+--- prev_hash: fedcba987654
 ### ENDNODE
 
 ### NODE
 --- id: some_node
---- tags: single_tag
---- meta: version=0.2.3, author=kDoSE
+--- tags: single.tag
+--- tags: another
+--- meta: version=0.2.3, author.name=kDoSE
 --- next:
 --- prev: 
-C1> def some_func(x):
-C1>     return x**2
-C1> 
+### ENDNODE
+
+
+### NODE
+
+--- id: yeah
+
 ### ENDNODE
 '''
 
@@ -94,9 +98,11 @@ if __name__ == '__main__':
     grammar = IGrammar(GNML_GRAMMAR)
     assert isinstance(grammar, Grammar)
 
+    # Test dotted_str_list (used for tags, next, prev)
     source = 'first.second.third, yeah, yeah.again,nospace99'
-    node = grammar['complex_identifier_list'].parse(source)
+    node = grammar['dotted_str_list'].parse(source)
     assert node.full_text == source
-    assert node.expr_name == 'complex_identifier_list'
+    assert node.expr_name == 'dotted_str_list'
     assert node.end == len(source)
+
 
